@@ -1,0 +1,6 @@
+.idea
+env
+archive
+dist
+node_modules
+

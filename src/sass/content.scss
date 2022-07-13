@@ -1,0 +1,56 @@
+#vocabulary-master-wrapper{
+  position: fixed;
+  top: 1em;
+  right: 1em;
+  max-width: 20vw;
+  border: 1px solid darkolivegreen;
+  background: whitesmoke;
+  min-width: 10em;
+  min-height: 10em;
+  max-height: 95vh;
+  z-index: 9999;
+  //overflow-y: scroll;
+
+  #title{
+    font-size: 1.5em;
+  }
+
+  audio{
+    display: none;
+  }
+  img.play-btn {
+    width: 1em;
+  }
+
+  #definition {
+    max-height: 30vh;
+    overflow-y: scroll;
+
+    .meaning {
+      margin-top: .3em;
+      .phonetic {
+        padding-left: .5em;
+      }
+      .partOfSpeech {
+        color: darkred;
+      }
+
+      .definition {
+      }
+
+      .example {
+        color: #25D084;
+      }
+
+      .synonyms {
+        color: #3f51b5;
+        font-weight: bold;
+      }
+    }
+  }
+
+  #examples{
+    max-height: 65vh;
+    overflow-y: scroll;
+  }
+}
