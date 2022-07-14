@@ -1,18 +1,40 @@
 #vocabulary-master-wrapper{
   position: fixed;
-  top: 1em;
   right: 1em;
-  max-width: 20vw;
   border: 1px solid darkolivegreen;
   background: whitesmoke;
-  min-width: 10em;
-  min-height: 10em;
-  max-height: 95vh;
+  //max-width: 25vw !important;
+  //min-height: 10em;
+  //max-height: 96vh !important;
   z-index: 9999;
+  font-size: 14px;
+  padding: 2px;
   //overflow-y: scroll;
 
-  #title{
-    font-size: 1.5em;
+  &.max{
+    top: 1em;
+    width: 25vw !important;
+    #title{
+      font-size: 1.5em;
+    }
+  }
+
+  &.mini{
+    bottom: 1em;
+    //padding: 1px;
+    //width: 2em;
+    //height: 2em !important;
+
+    #title{
+      font-size: 1em;
+    }
+  }
+
+  button{
+    font-size: 1em;
+    &.autoplay-btn {
+      font-size: .8em;
+    }
   }
 
   audio{
@@ -25,6 +47,7 @@
   #definition {
     max-height: 30vh;
     overflow-y: scroll;
+    width: 96%;
 
     .meaning {
       margin-top: .3em;

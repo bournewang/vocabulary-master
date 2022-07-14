@@ -1,38 +1,54 @@
 <template>
-<div id="vocabulary-master-wrapper" class="p-2">
-  <span id="title">Vocabulary Master</span>
-  <button @click="click_autoplay" class="btn btn-sm float-lg-end ms-3" :class="autoplay ? 'btn-default' : 'btn-primary'">Autoplay</button>
-  <template v-if="current_sentence">
-    <div>
-      <img :src="audio_icon_url" class="play-btn" @click="sentence_play()">
-      {{current_sentence}}
+  <div id="vocabulary-master-wrapper" :class="maximize ? 'max p-2' : 'mini'">
+    <div v-if="!maximize" class="head">
+      <span id="title" class="mt-1 mb-2 float-lg-start">Vocabulary Master</span>
+      <button class="btn btn-sm float-lg-end ms-3 border-0"  @click="maximize_window">+</button>
     </div>
-    <div id="trans_text" v-if="trans_text">{{trans_text}}</div>
-  </template>
-  <template v-if="current_word">
-    <div>{{current_word}} <img :src="audio_icon_url" alt="" class="play-btn" @click.stop="word_play"></div>
-    <div v-for="(phonetic,i) in phonetics">
-        <span class='phonetic'>{{phonetic.text}}</span>
-        <img :src="audio_icon_url" alt="" class="play-btn" @click.stop="word_play(phonetic.audio)"/>
-    </div>
-    <div id="definition" v-html="definition"></div>
-
-    <div id="examples" v-if="examples_en.length>0">
-      <hr>
-      <span>Examples: </span>
-      <div v-for="(sentence, i) in examples_en">
-          <template class="clearfix" v-if="i<5">
-            <img :src="audio_icon_url" class="play-btn" @click="sentence_play(sentence.textContent)">
-            <span v-html="sentence.innerHTML"></span>
-          </template>
+    <div v-if="maximize">
+      <div class="head">
+        <span id="title" class="mt-1 mb-2 ">Vocabulary Master</span>
+        <button class="btn btn-sm float-lg-end ms-3 border-0" @click="minimize_window">-</button>
+        <button @click="click_autoplay" class="btn btn-sm float-lg-end ms-3 autoplay-btn"
+                :class="autoplay ? 'btn-default' : 'btn-primary'" title="autoplay">
+          Autoplay
+        </button>
       </div>
+      <div v-if="current_selected == current_sentence && current_sentence">
+        <hr>
+        <div class="mt-2">
+          <img :src="audio_icon_url" class="play-btn" @click="sentence_play()">
+          {{ current_sentence }}
+        </div>
+        <div v-if="trans_text" id="trans_text" class="mt-2">{{ trans_text }}</div>
+      </div>
+      <div v-if="current_word">
+        <hr>
+        <div>{{ current_word }} <img :src="audio_icon_url" alt="" class="play-btn" @click.stop="word_play">
+          <span v-if="trans_word">{{ trans_word }}</span>
+        </div>
+        <div v-for="(phonetic,i) in phonetics">
+          <span class='phonetic'>{{ phonetic.text }}</span>
+          <img v-if="phonetic.audio" :src="audio_icon_url" alt="" class="play-btn"
+               @click.stop="word_play(phonetic.audio)"/>
+        </div>
+        <div id="definition" v-html="definition"></div>
+
+        <div id="examples" v-if="examples_en.length>0">
+          <hr>
+          <span>Examples: </span>
+          <div v-for="(sentence, i) in examples_en">
+            <template class="clearfix">
+              <img :src="audio_icon_url" class="play-btn" @click="sentence_play(sentence.textContent)">
+              <span v-html="sentence.innerHTML"></span>
+            </template>
+          </div>
+        </div>
+      </div>
+
+      <audio id="word-audio" controls :src="word_audio_url" :autoplay="autoplay"></audio>
+      <audio id="sentence-audio" controls :src="sentence_audio_url" :autoplay="autoplay"></audio>
     </div>
-  </template>
-
-    <audio id="word-audio" controls :src="word_audio_url" :autoplay="autoplay"></audio>
-    <audio id="sentence-audio" controls :src="sentence_audio_url" :autoplay="autoplay"></audio>
-
-</div>
+  </div>
 </template>
 
 <script>
@@ -43,14 +59,18 @@ export default {
   name: "Content",
   data(){
     return {
+      current_selected: null,
       current_word: null,
       current_sentence: null,
       definition: null,
       examples_en: [],
       phonetics: [],
       trans_text: null,
+      trans_word: null,
       audio_icon_url: null,
-      autoplay: false
+      autoplay: false,
+      // minimize: false,
+      maximize: true
     }
   },
   mounted() {
@@ -61,16 +81,15 @@ export default {
     var that = this
     window.addEventListener("mouseup", function(){
       var string = window.getSelection().toString().trim()
-      console.log("mouse up , selected: "+string)
-      if (string instanceof String) {
-        console.log("instanceof String")
-      }else{
-        console.log("not a instanceof String")
+      if (that.current_selected == string) {
+        return
       }
-      if ( (string.length < 1)) {
+      console.log("mouse up , selected type: "+typeof(string))
+      if (string.length < 1) {
         console.log("not a string selected, or nothing selected")
         return
       }
+      that.current_selected = string
       if (string.indexOf(" ") > 0) {
       //  sentences selected
         that.current_sentence = string
@@ -82,6 +101,9 @@ export default {
         that.current_sentence = null
         that.trans_text = null
         that.current_word = string
+        axios.get("https://vocabulary-master.local/translate.php?query="+that.current_word).then(function(res){
+          that.trans_word = res.data
+        })
         axios.get("https://api.dictionaryapi.dev/api/v2/entries/en/" + that.current_word)
             .then(function (res) {
               that.insert_meanings(res.data)
@@ -101,7 +123,7 @@ export default {
             that.examples_en.push(examples[i]);
             console.log("put into examples " + i)
             console.log(examples[i].innerHTML)
-            if (i > 4) {
+            if (i > 9) {
               break;
             }
           }
@@ -117,6 +139,12 @@ export default {
     //   var that = this
     //
     // }
+    minimize_window() {
+      this.maximize = false
+    },
+    maximize_window(){
+      this.maximize = true
+    },
     click_autoplay(){
       this.autoplay = !this.autoplay
       localStorage.setItem("autoplay", this.autoplay)
@@ -139,15 +167,6 @@ export default {
     },
     insert_meanings(res) {
       var exp = res[0];
-
-      // for (var p=0; p<exp.phonetics.length; p++) {
-      //   var phonetic = exp.phonetics[p];
-      //   if (!phonetic.audio) continue;
-      //   // var txt = "";
-      //   if (phonetic.text) detail += "<span class='phonetic'>["+phonetic.text+"]</span>";
-      //   detail += "<img src='"+this.audio_icon_url+"' class='play-btn' @click='word_play("+phonetic.audio+")'>"
-      //   // $("#d-"+word+" ."+class_prefix+"word").after(txt)
-      // }
       this.phonetics = exp.phonetics
 
       var detail = '';

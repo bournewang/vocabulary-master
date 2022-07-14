@@ -8,4 +8,6 @@ if (!$query = ($_GET['query'] ?? null)) {
 $res = translate($query, "en", "zh");
 if ($data = ($res['trans_result'][0]['dst'] ?? null)) {
     echo $data;
+}else{
+    var_dump($res);
 }
