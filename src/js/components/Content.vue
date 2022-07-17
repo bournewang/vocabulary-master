@@ -2,16 +2,13 @@
   <div id="vocabulary-master-wrapper" :class="maximize ? 'max p-2' : 'mini'">
     <div v-if="!maximize" class="head">
       <span id="title" class="mt-1 mb-2 float-lg-start">Vocabulary Master</span>
-      <button class="btn btn-sm float-lg-end ms-3 border-0"  @click="maximize_window">+</button>
+      <button  @click="maximize_window">&nbsp;+&nbsp;</button>
     </div>
     <div v-if="maximize">
       <div class="head">
         <span id="title" class="mt-1 mb-2 ">Vocabulary Master</span>
-        <button class="btn btn-sm float-lg-end ms-3 border-0" @click="minimize_window">-</button>
-        <button @click="click_autoplay" class="btn btn-sm float-lg-end ms-3 autoplay-btn"
-                :class="autoplay ? 'btn-default' : 'btn-primary'" title="autoplay">
-          Autoplay
-        </button>
+        <button @click="click_autoplay" :class="autoplay ? 'button-default' : 'button-primary'" title="autoplay">Autoplay</button>
+        <button @click="minimize_window">&nbsp;-&nbsp;</button>
       </div>
       <div v-if="current_selected == current_sentence && current_sentence">
         <hr>
@@ -19,9 +16,12 @@
           <img :src="audio_icon_url" class="play-btn" @click="sentence_play()">
           {{ current_sentence }}
         </div>
-        <div v-if="trans_text" id="trans_text" class="mt-2">{{ trans_text }}</div>
+        <div v-if="trans_text" id="trans_text" class="">
+          <hr>
+          {{ trans_text }}
+        </div>
       </div>
-      <div v-if="current_word">
+      <div v-if="current_selected == current_word && current_word">
         <hr>
         <div>{{ current_word }} <img :src="audio_icon_url" alt="" class="play-btn" @click.stop="word_play">
           <span v-if="trans_word">{{ trans_word }}</span>
@@ -31,7 +31,16 @@
           <img v-if="phonetic.audio" :src="audio_icon_url" alt="" class="play-btn"
                @click.stop="word_play(phonetic.audio)"/>
         </div>
-        <div id="definition" v-html="definition"></div>
+        <div id="meanings" v-if="meanings">
+          <div class='meaning' v-for="(meaning,i) in meanings">
+            <span class='partOfSpeech'>{{meaning.partOfSpeech}}</span><br/>
+            <template v-for="(definition,j) in meaning.definitions">
+              <div class='definition'>{{definition.definition}}</div>
+<!--              <div class='example'>{{definition.example}}</div>-->
+              <div class="synonyms">{{definition.synonyms.slice(0,5).join(', ')}}</div>
+            </template>
+          </div>
+        </div>
 
         <div id="examples" v-if="examples_en.length>0">
           <hr>
@@ -62,7 +71,7 @@ export default {
       current_selected: null,
       current_word: null,
       current_sentence: null,
-      definition: null,
+      meanings: [],
       examples_en: [],
       phonetics: [],
       trans_text: null,
@@ -106,7 +115,9 @@ export default {
         })
         axios.get("https://api.dictionaryapi.dev/api/v2/entries/en/" + that.current_word)
             .then(function (res) {
-              that.insert_meanings(res.data)
+              var exp = res.data[0];
+              that.phonetics = exp.phonetics
+              that.meanings = exp.meanings
             })
         axios.get("https://vocabulary-master.local/examples.php?word=" + that.current_word).then(function (res) {
           var parser = new DOMParser();
@@ -165,34 +176,6 @@ export default {
       }
       document.getElementById("sentence-audio").play()
     },
-    insert_meanings(res) {
-      var exp = res[0];
-      this.phonetics = exp.phonetics
-
-      var detail = '';
-      for (var i=0; i< exp.meanings.length; i++) {
-        var meaning = exp.meanings[i];
-        detail += "<div class='meaning'>";
-        if (meaning.partOfSpeech)
-          detail += "<span class='partOfSpeech'>"+ meaning.partOfSpeech + '</span><br/>';
-
-        var def_length = meaning.definitions.length;
-        for (var j=0; j<def_length; j++) {
-          var definition = meaning.definitions[j];
-          detail +=  "<div class='definition'>" + (def_length < 2 ? '' : (j+1)+'. ') + definition.definition + "</div>";
-          if (definition.example)
-            detail += "<div class='example'>examples: "+ definition.example + "</div>";
-          if (definition.synonyms && definition.synonyms.length > 0)
-            detail += "<div class='synonyms'>synonyms: "
-                + definition.synonyms.slice(0,5).join(', ')
-                + (definition.synonyms.length > 5 ? '...' : '')
-                + "</div>";
-        }
-        detail += "</div>";
-      }
-      // $("#d-"+word+" .meanings").html(detail)
-      this.definition = detail
-    },
     translate(query){
       var that = this
       axios.get("https://vocabulary-master.local/translate.php?query="+query).then(function(res){
@@ -206,10 +189,13 @@ export default {
     //   return "https://sentencedict.com/"+this.current_word+".html"
     // },
     word_audio_url: function(){
+      if (this.current_selected != this.current_word || !this.current_word)
+        return null
       return 'https://dict.youdao.com/dictvoice?type=1&audio=' + this.current_word
     },
     sentence_audio_url: function(){
-      if (!this.current_sentence) return ""
+      if (!this.current_sentence)
+        return null
       return 'https://dict.youdao.com/dictvoice?type=1&audio=' + this.current_sentence.replace(/\s*(\n)?\s*\(?\d+\)?\.?\s+/, "").replace(/\s*(\n)?\s*$/,"")
     }
   }
@@ -221,7 +207,7 @@ export default {
 </style>
 
 <style lang="css" scoped>
-@import "../../css/bootstrap5.min.css";
-@import "../../css/bootstrap5-grid.min.css";
+/*@import "../../css/bootstrap5.min.css";*/
+/*@import "../../css/bootstrap5-grid.min.css";*/
 </style>
 
